@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 
-import './Login.dart';
+import './home.dart';
 import './gqlclient.dart';
 
 void main() async {
@@ -20,7 +20,7 @@ class SatoryApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: LoginPage(title: 'Home'),
+      home: HomePage(title: 'Home'),
     );
   }
 }

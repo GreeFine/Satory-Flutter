@@ -1,19 +1,26 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:http/http.dart';
 import 'package:http/io_client.dart';
 import 'package:requests/requests.dart';
+import 'package:cookie_jar/cookie_jar.dart';
+import 'package:path_provider/path_provider.dart';
 
 import './graphql/queries.dart';
 import './graphql/mutations.dart';
 
 final String _host = "192.168.1.30";
 final String _backend_url = "http://$_host:4000";
+PersistCookieJar _persistCookieJar;
 
 Future<String> getCookie() async {
-  Map<String, String> cookie = await Requests.getStoredCookies(_host);
-  if (cookie.containsKey("Authorization"))
-    return "Authorization=${cookie['Authorization']}";
+  List<Cookie> results =
+      _persistCookieJar.loadForRequest(Uri.parse(_backend_url));
+  Cookie auth = results.firstWhere((element) => element.name == 'Authorization',
+      orElse: () => null);
+  if (auth != null) return "Authorization=${auth.value}";
   return '';
 }
 
@@ -24,14 +31,26 @@ class ClientWithCookies extends IOClient {
     String getCookieString(String _) => cookie;
     request.headers.update('cookie', getCookieString);
     return super.send(request).then((response) {
-      Requests.setStoredCookies(
-          _host, Requests.extractResponseCookies(response.headers));
+      List<Cookie> cookies = List();
+      final cookies_extracted =
+          Requests.extractResponseCookies(response.headers);
+      cookies_extracted.forEach((key, value) {
+        cookies.add(Cookie(key, value));
+      });
+      _persistCookieJar.saveFromResponse(Uri.parse(_backend_url), cookies);
       return response;
     });
   }
 }
 
 Future<ValueNotifier<GraphQLClient>> gqlclient() async {
+  Directory appDocDir = await getApplicationDocumentsDirectory();
+
+  _persistCookieJar = new PersistCookieJar(
+    dir: appDocDir.path,
+    ignoreExpires: true, //save/load even cookies that have expired.
+  );
+
   final HttpLink httpLink = HttpLink(
       uri: _backend_url,
       httpClient: ClientWithCookies(),
@@ -48,7 +67,6 @@ Future<ValueNotifier<GraphQLClient>> gqlclient() async {
 
 Future<bool> login(
     GraphQLClient client, String username, String password) async {
-  print("Logins: $password  $username");
   final MutationOptions options = MutationOptions(
     documentNode: gql(loginMutation),
     variables: <String, dynamic>{
@@ -64,6 +82,28 @@ Future<bool> login(
   }
   print("res: " + result.data.toString());
   return true;
+}
+
+Future<bool> disconnect(GraphQLClient client) async {
+  final MutationOptions options = MutationOptions(
+    documentNode: gql(disconnectMutation),
+  );
+  final QueryResult result = await client.mutate(options);
+
+  if (result.hasException) {
+    print("disconnect error: ${result.exception.toString()}");
+    return false;
+  }
+  _persistCookieJar.delete(Uri.parse(_backend_url));
+  print("res: " + result.data.toString());
+  return true;
+}
+
+bool connected() {
+  List<Cookie> results =
+      _persistCookieJar.loadForRequest(Uri.parse(_backend_url));
+  return results.isNotEmpty &&
+      results.firstWhere((element) => element.name == 'Authorization') != null;
 }
 
 void me(GraphQLClient client) async {

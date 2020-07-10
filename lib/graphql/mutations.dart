@@ -7,3 +7,9 @@ String loginMutation = r'''
     }
   }
 ''';
+
+String disconnectMutation = r'''
+  mutation disconnect {
+    logout
+  }
+''';

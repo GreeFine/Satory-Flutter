@@ -28,16 +28,20 @@ class ProfilePage extends StatelessWidget {
               }
 
               // it can be either Map or List
+              print("DEBUG: ${result.data['me']['id']}");
               List meInfos = [
-                result.data['id'],
-                result.data['username'],
-                result.data['picture'],
+                result.data['me']['id'],
+                result.data['me']['username'],
+                result.data['me']['picture'],
               ];
+              print("DEBUG!!: $meInfos");
 
               return ListView.builder(
+                  scrollDirection: Axis.vertical,
+                  shrinkWrap: true,
                   itemCount: meInfos.length,
                   itemBuilder: (context, index) {
-                    return Text(meInfos[index]);
+                    return Container(child: Text(meInfos[index]));
                   });
             },
           ),
