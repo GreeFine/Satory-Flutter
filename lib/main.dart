@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
+import 'package:provider/provider.dart';
 
-import './home.dart';
-import './gqlclient.dart';
+import './screens/home.dart';
+import './graphql/client.dart';
+import './graphql/model.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(GraphQLProvider(client: await gqlclient(), child: SatoryApp()));
+  runApp(MultiProvider(
+    providers: [
+      ChangeNotifierProvider(create: (_) => User()),
+    ],
+    child: GraphQLProvider(client: await gqlclient(), child: SatoryApp()),
+  ));
 }
 
 class SatoryApp extends StatelessWidget {

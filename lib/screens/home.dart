@@ -1,8 +1,9 @@
-import 'package:Satory_app/login.dart';
 import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
+import 'package:provider/provider.dart';
 
-import './gqlclient.dart';
+import './login.dart';
+import '../graphql/model.dart';
 
 class HomePage extends StatefulWidget {
   HomePage({Key key, this.title}) : super(key: key);
@@ -33,13 +34,13 @@ class _HomePageState extends State<HomePage> {
                         width: 200,
                       ),
                       (() {
-                        if (connected()) {
+                        if (context.watch<User>().connected) {
                           return Column(children: [
                             Text('Connected'),
                             GraphQLConsumer(builder: (GraphQLClient client) {
                               return RaisedButton(
                                 onPressed: () async {
-                                  disconnect(client);
+                                  context.read<User>().disconnect(client);
                                 },
                                 child: Text('Disconnect'),
                               );

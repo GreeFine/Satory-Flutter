@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
-import 'profile.dart';
 
-import 'gqlclient.dart';
+import 'profile.dart';
+import '../graphql/model.dart';
 
 class LoginPage extends StatefulWidget {
   LoginPage({Key key, this.title}) : super(key: key);
@@ -81,8 +82,10 @@ class _LoginPageState extends State<LoginPage> {
                           child: RaisedButton(
                             onPressed: () async {
                               if (_formKey.currentState.validate()) {
-                                final success =
-                                    await login(client, _username, _password);
+                                final success = await context
+                                    .read<User>()
+                                    .login(client, _username, _password);
+                                (client);
                                 if (success) {
                                   Navigator.push(
                                     context,
